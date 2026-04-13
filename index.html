@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Configurator</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --clr-bg:        #0a0a0a;
+      --clr-surface:   #141414;
+      --clr-panel:     #1a1a1a;
+      --clr-border:    #2a2a2a;
+      --clr-white:     #ffffff;
+      --clr-grey-1:    #e0e0e0;
+      --clr-grey-2:    #888888;
+      --clr-grey-3:    #444444;
+      --clr-accent:    #f0c040;
+
+      --viewport-ratio: 0.65;
+      --panel-ratio:    0.35;
+
+      --radius-card:   1.5rem;
+      --radius-panel:  1.2rem;
+      --radius-btn:    50%;
+
+      --btn-size:      2.75rem;
+      --overlay-pad:   1rem;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--clr-bg);
+      overflow: hidden;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── APP SHELL ─────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100dvh;
+      background: var(--clr-surface);
+    }
+
+    /* ─── VIEWPORT ZONE (zone 3) ────────────────────────── */
+    #zone-viewport {
+      position: relative;
+      flex: 0 0 65%;
+      background: var(--clr-surface);
+      overflow: hidden;
+      transition: flex-basis 200ms ease;
+    }
+
+    #app.fullscreen #zone-viewport {
+      flex: 0 0 100%;
+    }
+
+    #zone-panel {
+      transition: flex-basis 200ms ease, opacity 200ms ease;
+    }
+
+    #app.fullscreen #zone-panel {
+      flex-basis: 0%;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    #app.fullscreen #zone-info,
+    #app.fullscreen #zone-actions {
+      display: none;
+    }
+
+    #viewport-placeholder { display: none; }
+
+    #three-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* ─── OVERLAID CONTROLS ─────────────────────────────── */
+
+    /* Zone 1 — info (top-left) */
+    #zone-info {
+      position: absolute;
+      top: var(--overlay-pad);
+      left: var(--overlay-pad);
+      z-index: 10;
+    }
+
+    /* Zone 2 — actions (top-right) */
+    #zone-actions {
+      position: absolute;
+      top: var(--overlay-pad);
+      right: var(--overlay-pad);
+      z-index: 10;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Shared icon button style */
+    .icon-btn {
+      width: var(--btn-size);
+      height: var(--btn-size);
+      border-radius: var(--radius-btn);
+      border: 1px solid var(--clr-border);
+      background: rgba(20, 20, 20, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--clr-grey-1);
+      transition: background 150ms ease, color 150ms ease;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .icon-btn:active {
+      background: rgba(40, 40, 40, 0.9);
+      color: var(--clr-white);
+    }
+
+    .icon-btn svg {
+      width: 1.1rem;
+      height: 1.1rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ─── BOTTOM PANEL (zone 4) ─────────────────────────── */
+    #zone-panel {
+      flex: 0 0 35%;
+      background: var(--clr-panel);
+      border-top: 1px solid var(--clr-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-evenly;
+      padding: 0.75rem 0;
+      overflow: hidden;
+    }
+
+    /* Zone 6 — parameter title */
+    #zone-title {
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--clr-grey-2);
+    }
+
+    /* Zone 5 — parameter icons */
+    #zone-icons {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0 1rem;
+    }
+
+    .param-icon {
+      width: 3.2rem;
+      height: 3.2rem;
+      border-radius: 50%;
+      background: var(--clr-grey-3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 150ms ease, transform 150ms ease;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+
+    .param-icon.active {
+      background: var(--clr-white);
+    }
+
+    .param-icon svg {
+      width: 1.3rem;
+      height: 1.3rem;
+      stroke: var(--clr-grey-1);
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .param-icon.active svg {
+      stroke: var(--clr-bg);
+    }
+
+    /* Zone 7 — scrubber */
+    #zone-scrubber {
+      width: 100%;
+      height: 2.5rem;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      cursor: ew-resize;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+
+    #scrubber-track {
+      display: flex;
+      align-items: center;
+      gap: 0.28rem;
+      position: absolute;
+      left: 50%;
+      transform: translateX(0px); /* JS will update this */
+      transition: none;
+    }
+
+    .tick {
+      width: 1.5px;
+      background: var(--clr-grey-3);
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+
+    .tick.major { height: 1rem; }
+    .tick.minor { height: 0.5rem; }
+
+    /* center marker */
+    #scrubber-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 1.4rem;
+      background: var(--clr-accent);
+      border-radius: 1px;
+      pointer-events: none;
+    }
+
+    /* ─── INFO OVERLAY ──────────────────────────────────── */
+    #info-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: calc(var(--overlay-pad) + var(--btn-size) + 0.5rem) var(--overlay-pad) var(--overlay-pad);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 150ms ease;
+    }
+
+    #info-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #info-box {
+      background: rgba(20, 20, 20, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--clr-border);
+      border-radius: 0.75rem;
+      padding: 1rem 1.1rem;
+      max-width: 16rem;
+      color: var(--clr-grey-1);
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+
+    #info-box strong {
+      display: block;
+      color: var(--clr-white);
+      font-size: 0.85rem;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- VIEWPORT -->
+  <div id="zone-viewport">
+
+    <div id="viewport-placeholder">3D viewport</div>
+    <canvas id="three-canvas"></canvas>
+
+    <!-- Zone 1: Info -->
+    <div id="zone-info">
+      <button class="icon-btn" id="btn-info" aria-label="Info">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </button>
+    </div>
+
+    <!-- Zone 2: Actions -->
+    <div id="zone-actions">
+      <button class="icon-btn" id="btn-share" aria-label="Share">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-download" aria-label="Download">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+    </div>
+
+    <!-- Info overlay -->
+    <div id="info-overlay">
+      <div id="info-box">
+        <strong>Configurator</strong>
+        Drag the scrubber to adjust parameters. Tap icons to switch between them.
+      </div>
+    </div>
+
+  </div><!-- /zone-viewport -->
+
+  <!-- BOTTOM PANEL -->
+  <div id="zone-panel">
+
+    <!-- Zone 6: Title -->
+    <div id="zone-title">Height</div>
+
+    <!-- Zone 5: Icons -->
+    <div id="zone-icons">
+      <div class="param-icon" data-param="width">
+        <svg viewBox="0 0 24 24"><path d="M8 6H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/><path d="M16 6h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
+      </div>
+      <div class="param-icon active" data-param="height">
+        <svg viewBox="0 0 24 24"><path d="M6 8V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/><path d="M6 16v3a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </div>
+      <div class="param-icon" data-param="depth">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18"/></svg>
+      </div>
+    </div>
+
+    <!-- Zone 7: Scrubber -->
+    <div id="zone-scrubber">
+      <div id="scrubber-track"></div>
+      <div id="scrubber-center"></div>
+    </div>
+
+  </div><!-- /zone-panel -->
+
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  // ─── INFO TOGGLE ────────────────────────────────────────
+  const btnInfo     = document.getElementById('btn-info');
+  const infoOverlay = document.getElementById('info-overlay');
+
+  btnInfo.addEventListener('click', () => infoOverlay.classList.toggle('visible'));
+  infoOverlay.addEventListener('click', e => {
+    if (e.target === infoOverlay) infoOverlay.classList.remove('visible');
+  });
+
+  // ─── PARAM STATE ────────────────────────────────────────
+  const icons = document.querySelectorAll('.param-icon');
+  const titleEl = document.getElementById('zone-title');
+  const paramNames = { width: 'Width', height: 'Height', depth: 'Depth' };
+
+  let activeParam = 'height';
+
+  // cube dimension state (0..1 normalised, 0.5 = centre)
+  const dims = { width: 0.5, height: 0.5, depth: 0.5 };
+  const MIN_DIM = 0.3, MAX_DIM = 2.2;
+
+  function getDim(t) { return MIN_DIM + t * (MAX_DIM - MIN_DIM); }
+
+  icons.forEach(icon => {
+    icon.addEventListener('click', () => {
+      activeParam = icon.dataset.param;
+      icons.forEach(i => i.classList.remove('active'));
+      icon.classList.add('active');
+      titleEl.textContent = paramNames[activeParam] || activeParam;
+      // sync scrubber position to stored dim value
+      offsetPx = (dims[activeParam] - 0.5) * 2 * PX_PER_UNIT;
+      updateTrack(offsetPx);
+    });
+  });
+
+  // ─── THREE.JS SETUP ─────────────────────────────────────
+  const canvas    = document.getElementById('three-canvas');
+  const vp        = document.getElementById('zone-viewport');
+
+  const renderer  = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x141414, 1);
+
+  const scene     = new THREE.Scene();
+  const camera    = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  camera.position.set(2.5, 2, 3);
+  camera.lookAt(0, 0, 0);
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambient);
+  const dirA = new THREE.DirectionalLight(0xffffff, 0.9);
+  dirA.position.set(5, 8, 5);
+  scene.add(dirA);
+  const dirB = new THREE.DirectionalLight(0xaaaaaa, 0.3);
+  dirB.position.set(-5, -2, -3);
+  scene.add(dirB);
+
+  // Cube
+  const mat  = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.5, metalness: 0.2 });
+  let geo    = new THREE.BoxGeometry(1, 1, 1);
+  let mesh   = new THREE.Mesh(geo, mat);
+  scene.add(mesh);
+
+  function rebuildCube() {
+    const w = getDim(dims.width);
+    const h = getDim(dims.height);
+    const d = getDim(dims.depth);
+    mesh.scale.set(w, h, d);
+  }
+
+  function resizeRenderer() {
+    const w = vp.clientWidth;
+    const h = vp.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+
+  resizeRenderer();
+  window.addEventListener('resize', resizeRenderer);
+
+  // ─── ORBIT (touch + mouse) ──────────────────────────────
+  let orbitDragging = false;
+  let lastOrbitX = 0, lastOrbitY = 0;
+  let theta = 0.6, phi = 1.0, radius = 5;
+
+  function applyOrbit() {
+    camera.position.set(
+      radius * Math.sin(phi) * Math.sin(theta),
+      radius * Math.cos(phi),
+      radius * Math.sin(phi) * Math.cos(theta)
+    );
+    camera.lookAt(0, 0, 0);
+  }
+  applyOrbit();
+
+  canvas.addEventListener('pointerdown', e => {
+    orbitDragging = true;
+    lastOrbitX = e.clientX;
+    lastOrbitY = e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!orbitDragging) return;
+    const dx = e.clientX - lastOrbitX;
+    const dy = e.clientY - lastOrbitY;
+    lastOrbitX = e.clientX;
+    lastOrbitY = e.clientY;
+    theta -= dx * 0.01;
+    phi   = Math.max(0.15, Math.min(Math.PI - 0.15, phi + dy * 0.01));
+    applyOrbit();
+  });
+
+  canvas.addEventListener('pointerup',     () => { orbitDragging = false; });
+  canvas.addEventListener('pointercancel', () => { orbitDragging = false; });
+
+  // ─── RENDER LOOP ─────────────────────────────────────────
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // ─── FULLSCREEN (double-tap on mesh) ────────────────────
+  const app = document.getElementById('app');
+  const raycaster = new THREE.Raycaster();
+  const pointer   = new THREE.Vector2();
+  let lastTap  = 0;
+  let tapStartX = 0, tapStartY = 0;
+
+  canvas.addEventListener('pointerdown', e => {
+    tapStartX = e.clientX;
+    tapStartY = e.clientY;
+  });
+
+  canvas.addEventListener('pointerup', e => {
+    // reject drags
+    const dx = Math.abs(e.clientX - tapStartX);
+    const dy = Math.abs(e.clientY - tapStartY);
+    if (dx > 12 || dy > 12) return;
+
+    // convert to NDC (-1..1)
+    const rect = canvas.getBoundingClientRect();
+    pointer.x =  ((e.clientX - rect.left)  / rect.width)  * 2 - 1;
+    pointer.y = -((e.clientY - rect.top)   / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObject(mesh);
+    if (hits.length === 0) return; // missed mesh
+
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      app.classList.toggle('fullscreen');
+      setTimeout(resizeRenderer, 210);
+    }
+    lastTap = now;
+  });
+
+  // ─── SCRUBBER ───────────────────────────────────────────
+  const track    = document.getElementById('scrubber-track');
+  const scrubber = document.getElementById('zone-scrubber');
+
+  const TICK_COUNT = 80;
+  const TICK_W     = 1.5;
+  const TICK_STEP  = 5.98; // px per tick (width + gap)
+  const TOTAL_PX   = TICK_COUNT * TICK_STEP; // full range in px
+
+  for (let i = 0; i < TICK_COUNT; i++) {
+    const t = document.createElement('div');
+    t.className = 'tick ' + (i % 5 === 0 ? 'major' : 'minor');
+    track.appendChild(t);
+  }
+
+  let offsetPx = 0;
+
+  const PX_PER_UNIT = 120; // px of drag = full dim range
+
+  function updateTrack(px) {
+    offsetPx = px;
+    track.style.transform = `translateX(${offsetPx}px)`;
+    // map drag delta to [0,1], centre (0px) = 0.5
+    const raw = 0.5 + (offsetPx / PX_PER_UNIT) * 0.5;
+    dims[activeParam] = Math.max(0, Math.min(1, raw));
+    rebuildCube();
+  }
+
+  let scrubDragging = false;
+  let startX = 0, startOff = 0;
+
+  scrubber.addEventListener('pointerdown', e => {
+    scrubDragging = true;
+    startX   = e.clientX;
+    startOff = offsetPx;
+    scrubber.setPointerCapture(e.pointerId);
+  });
+
+  scrubber.addEventListener('pointermove', e => {
+    if (!scrubDragging) return;
+    updateTrack(startOff + (e.clientX - startX));
+  });
+
+  scrubber.addEventListener('pointerup',     () => { scrubDragging = false; });
+  scrubber.addEventListener('pointercancel', () => { scrubDragging = false; });
+
+  updateTrack(0);
+  rebuildCube();
+</script>
+</body>
+</html>

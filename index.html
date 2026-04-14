@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Configurator</title>
+  <title>Egg Cup Configurator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -12,25 +14,41 @@
     }
 
     :root {
-      --clr-bg:        #0a0a0a;
-      --clr-surface:   #141414;
-      --clr-panel:     #1a1a1a;
-      --clr-border:    #2a2a2a;
-      --clr-white:     #ffffff;
-      --clr-grey-1:    #e0e0e0;
-      --clr-grey-2:    #888888;
-      --clr-grey-3:    #444444;
-      --clr-accent:    #f0c040;
+      /* ── Warm Palette — contrasted ── */
+      --clr-bg:          #FAF7F2;
+      --clr-surface:     #FFFFFF;
+      /* Viewport is now the DARK zone */
+      --clr-viewport:    #3D2E28;
+      --clr-viewport-2:  #2A1F1A;
+      /* Panel stays LIGHT — creates clear split */
+      --clr-panel:       #FAF7F2;
+      --clr-panel-inner: #EDE5DB;
+      --clr-border:      #E0D5C8;
+      --clr-border-dark: rgba(255,255,255,0.10);
+      --clr-accent:      #E8927C;
+      --clr-accent-soft: #F5D5CB;
+      --clr-accent-dark: #C8705A;
+      --clr-text-1:      #2C2420;
+      --clr-text-2:      #9C8880;
+      --clr-text-3:      #C4B8B0;
+      /* Buttons on dark viewport = dark glass */
+      --clr-btn-bg:      rgba(255,255,255,0.12);
+      --clr-btn-bg-light:#FFFFFF;
+      --clr-white:       #FFFFFF;
 
+      /* ── Layout ── */
       --viewport-ratio: 0.65;
       --panel-ratio:    0.35;
+      --radius-card:    1.5rem;
+      --radius-panel:   1.2rem;
+      --radius-btn:     50%;
+      --btn-size:       2.75rem;
+      --overlay-pad:    1rem;
 
-      --radius-card:   1.5rem;
-      --radius-panel:  1.2rem;
-      --radius-btn:    50%;
-
-      --btn-size:      2.75rem;
-      --overlay-pad:   1rem;
+      /* ── Shadows ── */
+      --shadow-btn:     0 2px 8px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
+      --shadow-panel:   0 -6px 32px rgba(44,36,32,0.12);
+      --shadow-info:    0 8px 32px rgba(0,0,0,0.30);
     }
 
     html, body {
@@ -38,8 +56,9 @@
       height: 100%;
       background: var(--clr-bg);
       overflow: hidden;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-family: 'Nunito', sans-serif;
       -webkit-font-smoothing: antialiased;
+      color: var(--clr-text-1);
     }
 
     /* ─── APP SHELL ─────────────────────────────────────── */
@@ -48,21 +67,20 @@
       flex-direction: column;
       width: 100%;
       height: 100dvh;
-      background: var(--clr-surface);
+      background: var(--clr-bg);
     }
 
-    /* ─── VIEWPORT ZONE (zone 3) ────────────────────────── */
+    /* ─── VIEWPORT ZONE ─────────────────────────────────── */
     #zone-viewport {
       position: relative;
       flex: 0 0 65%;
-      background: var(--clr-surface);
       overflow: hidden;
       transition: flex-basis 200ms ease;
+      /* Dark warm stage — model pops against this */
+      background: radial-gradient(ellipse at 55% 45%, #4A3830 0%, #2A1F1A 100%);
     }
 
-    #app.fullscreen #zone-viewport {
-      flex: 0 0 100%;
-    }
+    #app.fullscreen #zone-viewport { flex: 0 0 100%; }
 
     #zone-panel {
       transition: flex-basis 200ms ease, opacity 200ms ease;
@@ -76,9 +94,7 @@
     }
 
     #app.fullscreen #zone-info,
-    #app.fullscreen #zone-actions {
-      display: none;
-    }
+    #app.fullscreen #zone-actions { display: none; }
 
     #viewport-placeholder { display: none; }
 
@@ -90,8 +106,6 @@
     }
 
     /* ─── OVERLAID CONTROLS ─────────────────────────────── */
-
-    /* Zone 1 — info (top-left) */
     #zone-info {
       position: absolute;
       top: var(--overlay-pad);
@@ -99,7 +113,6 @@
       z-index: 10;
     }
 
-    /* Zone 2 — actions (top-right) */
     #zone-actions {
       position: absolute;
       top: var(--overlay-pad);
@@ -110,61 +123,118 @@
       gap: 0.5rem;
     }
 
-    /* Shared icon button style */
+    /* ── Product label (top-left) ── */
+    #product-label {
+      background: rgba(255,255,255,0.13);
+      border: 1px solid var(--clr-border-dark);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      padding: 0.35rem 0.85rem 0.35rem 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: var(--shadow-btn);
+    }
+
+    #product-label .dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: var(--clr-accent);
+      flex-shrink: 0;
+    }
+
+    #product-label span {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.80);
+      text-transform: uppercase;
+    }
+
+    /* ── Shared icon button style ── */
     .icon-btn {
       width: var(--btn-size);
       height: var(--btn-size);
       border-radius: var(--radius-btn);
-      border: 1px solid var(--clr-border);
-      background: rgba(20, 20, 20, 0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--clr-border-dark);
+      background: rgba(255,255,255,0.13);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-btn);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: var(--clr-grey-1);
-      transition: background 150ms ease, color 150ms ease;
+      color: rgba(255,255,255,0.85);
+      transition: background 150ms ease, color 150ms ease, transform 100ms ease;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
 
     .icon-btn:active {
-      background: rgba(40, 40, 40, 0.9);
+      background: rgba(232,146,124,0.35);
       color: var(--clr-white);
+      transform: scale(0.94);
     }
 
     .icon-btn svg {
-      width: 1.1rem;
-      height: 1.1rem;
+      width: 1.05rem;
+      height: 1.05rem;
       stroke: currentColor;
       fill: none;
-      stroke-width: 1.6;
+      stroke-width: 1.7;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
 
-    /* ─── BOTTOM PANEL (zone 4) ─────────────────────────── */
+    /* ─── BOTTOM PANEL ──────────────────────────────────── */
     #zone-panel {
       flex: 0 0 35%;
       background: var(--clr-panel);
-      border-top: 1px solid var(--clr-border);
+      border-top: none;
+      box-shadow: var(--shadow-panel);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-evenly;
       padding: 0.75rem 0;
       overflow: hidden;
+      border-radius: 1.5rem 1.5rem 0 0;
     }
 
-    /* Zone 6 — parameter title */
+    /* ── Drag handle ── */
+    #panel-handle {
+      width: 2.5rem;
+      height: 0.25rem;
+      border-radius: 1rem;
+      background: var(--clr-border);
+      margin-bottom: 0.1rem;
+    }
+
+    /* Zone 6 — parameter title + value */
+    #zone-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
     #zone-title {
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--clr-grey-2);
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--clr-text-2);
+      letter-spacing: 0.01em;
     }
 
+    #zone-value {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--clr-accent);
+      letter-spacing: 0.04em;
+      min-width: 2.5rem;
+    }
     /* Zone 5 — parameter icons */
     #zone-icons {
       width: 100%;
@@ -179,38 +249,46 @@
       width: 3.2rem;
       height: 3.2rem;
       border-radius: 50%;
-      background: var(--clr-grey-3);
+      background: var(--clr-panel-inner);
+      border: 1.5px solid var(--clr-border);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      transition: background 150ms ease, transform 150ms ease;
+      transition: background 180ms ease, transform 150ms ease, border-color 180ms ease, box-shadow 180ms ease;
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
     }
 
+    .param-icon:active {
+      transform: scale(0.92);
+    }
+
     .param-icon.active {
-      background: var(--clr-white);
+      background: var(--clr-accent);
+      border-color: var(--clr-accent);
+      box-shadow: 0 4px 14px rgba(232,146,124,0.35);
     }
 
     .param-icon svg {
-      width: 1.3rem;
-      height: 1.3rem;
-      stroke: var(--clr-grey-1);
+      width: 1.2rem;
+      height: 1.2rem;
+      stroke: var(--clr-text-2);
       fill: none;
       stroke-width: 1.6;
       stroke-linecap: round;
       stroke-linejoin: round;
+      transition: stroke 180ms ease;
     }
 
     .param-icon.active svg {
-      stroke: var(--clr-bg);
+      stroke: var(--clr-white);
     }
 
     /* Zone 7 — scrubber */
     #zone-scrubber {
       width: 100%;
-      height: 2.5rem;
+      height: 3rem;
       position: relative;
       overflow: hidden;
       display: flex;
@@ -220,25 +298,60 @@
       touch-action: none;
     }
 
+    /* min / max edge labels */
+    .scrubber-edge {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--clr-text-3);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .scrubber-edge.min { left: 0.75rem; }
+    .scrubber-edge.max { right: 0.75rem; }
+
+    /* fade edges so ticks vanish naturally */
+    #zone-scrubber::before,
+    #zone-scrubber::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 3.5rem;
+      z-index: 1;
+      pointer-events: none;
+    }
+    #zone-scrubber::before {
+      left: 0;
+      background: linear-gradient(to right, var(--clr-panel), transparent);
+    }
+    #zone-scrubber::after {
+      right: 0;
+      background: linear-gradient(to left, var(--clr-panel), transparent);
+    }
+
     #scrubber-track {
       display: flex;
       align-items: center;
       gap: 0.28rem;
       position: absolute;
       left: 50%;
-      transform: translateX(0px); /* JS will update this */
+      transform: translateX(0px);
       transition: none;
     }
 
     .tick {
       width: 1.5px;
-      background: var(--clr-grey-3);
       border-radius: 1px;
       flex-shrink: 0;
+      transition: background 80ms ease;
     }
-
     .tick.major { height: 1rem; }
-    .tick.minor { height: 0.5rem; }
+    .tick.minor { height: 0.45rem; }
+    .tick.dim   { background: var(--clr-text-3); }
+    .tick.lit   { background: var(--clr-accent); opacity: 0.7; }
 
     /* center marker */
     #scrubber-center {
@@ -246,10 +359,12 @@
       left: 50%;
       transform: translateX(-50%);
       width: 2px;
-      height: 1.4rem;
+      height: 1.6rem;
       background: var(--clr-accent);
       border-radius: 1px;
       pointer-events: none;
+      box-shadow: 0 0 6px rgba(232,146,124,0.6);
+      z-index: 3;
     }
 
     /* ─── INFO OVERLAY ──────────────────────────────────── */
@@ -272,25 +387,32 @@
     }
 
     #info-box {
-      background: rgba(20, 20, 20, 0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--clr-border);
-      border-radius: 0.75rem;
+      background: rgba(30,20,18,0.88);
+      border: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-info);
+      border-radius: 1rem;
       padding: 1rem 1.1rem;
       max-width: 16rem;
-      color: var(--clr-grey-1);
+      color: rgba(255,255,255,0.65);
       font-size: 0.8rem;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     #info-box strong {
       display: block;
-      color: var(--clr-white);
+      color: rgba(255,255,255,0.92);
       font-size: 0.85rem;
+      font-weight: 700;
       margin-bottom: 0.4rem;
-      letter-spacing: 0.05em;
     }
+
+    #info-box strong em {
+      color: var(--clr-accent);
+      font-style: normal;
+    }
+
   </style>
 </head>
 <body>
@@ -326,8 +448,8 @@
     <!-- Info overlay -->
     <div id="info-overlay">
       <div id="info-box">
-        <strong>Configurator</strong>
-        Drag the scrubber to adjust parameters. Tap icons to switch between them.
+        <strong>Egg Cup <em>Studio</em></strong>
+        Drag the scrubber to adjust dimensions. Tap icons to switch between Width, Height and Depth. Double-tap the model to go fullscreen.
       </div>
     </div>
 
@@ -336,8 +458,13 @@
   <!-- BOTTOM PANEL -->
   <div id="zone-panel">
 
-    <!-- Zone 6: Title -->
-    <div id="zone-title">Height</div>
+    <div id="panel-handle"></div>
+
+    <!-- Zone 6: Title + value -->
+    <div id="zone-title-row">
+      <div id="zone-title">Height</div>
+      <div id="zone-value">— cm</div>
+    </div>
 
     <!-- Zone 5: Icons -->
     <div id="zone-icons">
@@ -354,6 +481,8 @@
 
     <!-- Zone 7: Scrubber -->
     <div id="zone-scrubber">
+      <span class="scrubber-edge min">MIN</span>
+      <span class="scrubber-edge max">MAX</span>
       <div id="scrubber-track"></div>
       <div id="scrubber-center"></div>
     </div>
@@ -375,12 +504,12 @@
 
   // ─── PARAM STATE ────────────────────────────────────────
   const icons = document.querySelectorAll('.param-icon');
-  const titleEl = document.getElementById('zone-title');
+  const titleEl  = document.getElementById('zone-title');
+  const valueEl  = document.getElementById('zone-value');
   const paramNames = { width: 'Width', height: 'Height', depth: 'Depth' };
 
   let activeParam = 'height';
 
-  // cube dimension state (0..1 normalised, 0.5 = centre)
   const dims = { width: 0.5, height: 0.5, depth: 0.5 };
   const MIN_DIM = 0.3, MAX_DIM = 2.2;
 
@@ -392,39 +521,42 @@
       icons.forEach(i => i.classList.remove('active'));
       icon.classList.add('active');
       titleEl.textContent = paramNames[activeParam] || activeParam;
-      // sync scrubber position to stored dim value
       offsetPx = (dims[activeParam] - 0.5) * 2 * PX_PER_UNIT;
       updateTrack(offsetPx);
     });
   });
 
   // ─── THREE.JS SETUP ─────────────────────────────────────
-  const canvas    = document.getElementById('three-canvas');
-  const vp        = document.getElementById('zone-viewport');
+  const canvas   = document.getElementById('three-canvas');
+  const vp       = document.getElementById('zone-viewport');
 
-  const renderer  = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x141414, 1);
+  renderer.setClearColor(0x00000000, 0); // transparent — CSS gradient shows through
 
-  const scene     = new THREE.Scene();
-  const camera    = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  const scene    = new THREE.Scene();
+  const camera   = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   camera.position.set(2.5, 2, 3);
   camera.lookAt(0, 0, 0);
 
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+  // Lights — tuned for dark background
+  const ambient = new THREE.AmbientLight(0xFFEEDD, 0.4);
   scene.add(ambient);
-  const dirA = new THREE.DirectionalLight(0xffffff, 0.9);
+  const dirA = new THREE.DirectionalLight(0xFFFFFF, 1.4);
   dirA.position.set(5, 8, 5);
   scene.add(dirA);
-  const dirB = new THREE.DirectionalLight(0xaaaaaa, 0.3);
-  dirB.position.set(-5, -2, -3);
+  const dirB = new THREE.DirectionalLight(0xE8927C, 0.30);
+  dirB.position.set(-4, 2, -3);
   scene.add(dirB);
 
-  // Cube
-  const mat  = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.5, metalness: 0.2 });
-  let geo    = new THREE.BoxGeometry(1, 1, 1);
-  let mesh   = new THREE.Mesh(geo, mat);
+  // Cube — warm off-white material
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xF8F0E8,
+    roughness: 0.35,
+    metalness: 0.05,
+  });
+  let geo  = new THREE.BoxGeometry(1, 1, 1);
+  let mesh = new THREE.Mesh(geo, mat);
   scene.add(mesh);
 
   function rebuildCube() {
@@ -445,7 +577,7 @@
   resizeRenderer();
   window.addEventListener('resize', resizeRenderer);
 
-  // ─── ORBIT (touch + mouse) ──────────────────────────────
+  // ─── ORBIT ──────────────────────────────────────────────
   let orbitDragging = false;
   let lastOrbitX = 0, lastOrbitY = 0;
   let theta = 0.6, phi = 1.0, radius = 5;
@@ -474,7 +606,7 @@
     lastOrbitX = e.clientX;
     lastOrbitY = e.clientY;
     theta -= dx * 0.01;
-    phi   = Math.max(0.15, Math.min(Math.PI - 0.15, phi - dy * 0.01));
+    phi = Math.max(0.15, Math.min(Math.PI - 0.15, phi - dy * 0.01));
     applyOrbit();
   });
 
@@ -497,11 +629,11 @@
     mesh.visible = meshVisible;
   });
 
-  // ─── FULLSCREEN (double-tap on mesh) ────────────────────
+  // ─── FULLSCREEN ─────────────────────────────────────────
   const app = document.getElementById('app');
   const raycaster = new THREE.Raycaster();
   const pointer   = new THREE.Vector2();
-  let lastTap  = 0;
+  let lastTap = 0;
   let tapStartX = 0, tapStartY = 0;
 
   canvas.addEventListener('pointerdown', e => {
@@ -510,19 +642,17 @@
   });
 
   canvas.addEventListener('pointerup', e => {
-    // reject drags
     const dx = Math.abs(e.clientX - tapStartX);
     const dy = Math.abs(e.clientY - tapStartY);
     if (dx > 12 || dy > 12) return;
 
-    // convert to NDC (-1..1)
     const rect = canvas.getBoundingClientRect();
     pointer.x =  ((e.clientX - rect.left)  / rect.width)  * 2 - 1;
     pointer.y = -((e.clientY - rect.top)   / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObject(mesh);
-    if (hits.length === 0) return; // missed mesh
+    if (hits.length === 0) return;
 
     const now = Date.now();
     if (now - lastTap < 300) {
@@ -536,28 +666,65 @@
   const track    = document.getElementById('scrubber-track');
   const scrubber = document.getElementById('zone-scrubber');
 
-  const TICK_COUNT = 80;
-  const TICK_W     = 1.5;
-  const TICK_STEP  = 5.98; // px per tick (width + gap)
-  const TOTAL_PX   = TICK_COUNT * TICK_STEP; // full range in px
+  // Total ticks — half on each side of center
+  const TICK_COUNT  = 100;       // 50 left, 50 right of center tick
+  const TICK_STEP   = 5.98;      // px per tick (width + gap)
+  const HALF        = Math.floor(TICK_COUNT / 2);
+  const PX_PER_UNIT = HALF * TICK_STEP; // full drag range = half the track width
+  const ticks       = [];
 
   for (let i = 0; i < TICK_COUNT; i++) {
     const t = document.createElement('div');
-    t.className = 'tick ' + (i % 5 === 0 ? 'major' : 'minor');
+    t.className = 'tick ' + (i % 5 === 0 ? 'major' : 'minor') + ' dim';
     track.appendChild(t);
+    ticks.push(t);
   }
 
-  let offsetPx = 0;
+  // Pre-offset: shift track left by half its width so tick[HALF] sits at center marker
+  // left:50% + translateX positions the track's left edge at center.
+  // We need to move it back by (HALF * TICK_STEP) so the middle tick aligns with center.
+  const TRACK_OFFSET = -(HALF * TICK_STEP);
 
-  const PX_PER_UNIT = 120; // px of drag = full dim range
+  let offsetPx = 0; // drag offset on top of TRACK_OFFSET
 
-  function updateTrack(px) {
+  function updateTickColors(norm) {
+    // norm 0..1 → lit ticks = 0..TICK_COUNT
+    const litCount = Math.round(norm * TICK_COUNT);
+    ticks.forEach((t, i) => {
+      if (i < litCount) {
+        t.classList.remove('dim'); t.classList.add('lit');
+      } else {
+        t.classList.remove('lit'); t.classList.add('dim');
+      }
+    });
+  }
+
+  function applyTransform(px) {
+    track.style.transform = `translateX(${TRACK_OFFSET + px}px)`;
+  }
+
+  function updateTrack(px, rubber = false) {
+    const maxPx =  PX_PER_UNIT;
+    const minPx = -PX_PER_UNIT;
+
+    if (px > maxPx) {
+      px = rubber ? maxPx + (px - maxPx) * 0.25 : maxPx;
+    } else if (px < minPx) {
+      px = rubber ? minPx + (px - minPx) * 0.25 : minPx;
+    }
+
     offsetPx = px;
-    track.style.transform = `translateX(${offsetPx}px)`;
-    // map drag delta to [0,1], centre (0px) = 0.5
-    const raw = 0.5 + (offsetPx / PX_PER_UNIT) * 0.5;
-    dims[activeParam] = Math.max(0, Math.min(1, raw));
+    applyTransform(offsetPx);
+
+    // center (0px) = 0.5; drag right (positive) = lower offset on track = higher value
+    const norm = Math.max(0, Math.min(1, 0.5 - offsetPx / (2 * PX_PER_UNIT)));
+    dims[activeParam] = norm;
     rebuildCube();
+
+    const cm = (getDim(norm) * 10).toFixed(1);
+    valueEl.textContent = cm + ' cm';
+
+    updateTickColors(norm);
   }
 
   let scrubDragging = false;
@@ -572,12 +739,28 @@
 
   scrubber.addEventListener('pointermove', e => {
     if (!scrubDragging) return;
-    updateTrack(startOff + (e.clientX - startX));
+    updateTrack(startOff + (e.clientX - startX), true);
   });
 
-  scrubber.addEventListener('pointerup',     () => { scrubDragging = false; });
-  scrubber.addEventListener('pointercancel', () => { scrubDragging = false; });
+  function releaseSnap() {
+    scrubDragging = false;
+    const maxPx =  PX_PER_UNIT;
+    const minPx = -PX_PER_UNIT;
+    if (offsetPx > maxPx || offsetPx < minPx) {
+      const target = offsetPx > maxPx ? maxPx : minPx;
+      track.style.transition = 'transform 320ms cubic-bezier(0.25, 1.5, 0.5, 1)';
+      applyTransform(target);
+      setTimeout(() => { track.style.transition = 'none'; }, 330);
+      offsetPx = target;
+      const norm = 0.5 - target / (2 * PX_PER_UNIT);
+      dims[activeParam] = Math.max(0, Math.min(1, norm));
+    }
+  }
 
+  scrubber.addEventListener('pointerup',     releaseSnap);
+  scrubber.addEventListener('pointercancel', releaseSnap);
+
+  // Init at center (default value = 0.5)
   updateTrack(0);
   rebuildCube();
 </script>

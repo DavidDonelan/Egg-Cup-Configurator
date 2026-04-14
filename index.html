@@ -521,8 +521,9 @@
       icons.forEach(i => i.classList.remove('active'));
       icon.classList.add('active');
       titleEl.textContent = paramNames[activeParam] || activeParam;
-      offsetPx = (dims[activeParam] - 0.5) * 2 * PX_PER_UNIT;
-      updateTrack(offsetPx);
+      // Recover scrubber position from stored norm — visual only, no dims write
+      const restoredPx = (0.5 - dims[activeParam]) * 2 * PX_PER_UNIT;
+      applyTrack(restoredPx);
     });
   });
 
@@ -703,6 +704,20 @@
     track.style.transform = `translateX(${TRACK_OFFSET + px}px)`;
   }
 
+  // Visual only — moves scrubber + ticks + label. Does NOT write to dims[].
+  function applyTrack(px) {
+    const maxPx =  PX_PER_UNIT;
+    const minPx = -PX_PER_UNIT;
+    px = Math.max(minPx, Math.min(maxPx, px));
+    offsetPx = px;
+    applyTransform(offsetPx);
+    const norm = Math.max(0, Math.min(1, 0.5 - offsetPx / (2 * PX_PER_UNIT)));
+    const cm = (getDim(norm) * 10).toFixed(1);
+    valueEl.textContent = cm + ' cm';
+    updateTickColors(norm);
+  }
+
+  // Data + visual — writes to dims[], rebuilds cube, then calls applyTrack.
   function updateTrack(px, rubber = false) {
     const maxPx =  PX_PER_UNIT;
     const minPx = -PX_PER_UNIT;
@@ -716,9 +731,8 @@
     offsetPx = px;
     applyTransform(offsetPx);
 
-    // center (0px) = 0.5; drag right (positive) = lower offset on track = higher value
     const norm = Math.max(0, Math.min(1, 0.5 - offsetPx / (2 * PX_PER_UNIT)));
-    dims[activeParam] = norm;
+    dims[activeParam] = norm;   // ← only place dims[] is written during drag
     rebuildCube();
 
     const cm = (getDim(norm) * 10).toFixed(1);
